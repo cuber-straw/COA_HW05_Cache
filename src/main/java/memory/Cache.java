@@ -21,7 +21,7 @@ public class Cache {	//
 
 	public static final int LINE_SIZE_B = 1 * 1024; // 每一行 1 KB 最小可寻址单元
 
-	private CacheLinePool cache = new CacheLinePool(CACHE_SIZE_B/LINE_SIZE_B); 	// 总大小1MB / 行大小1KB = 1024个行
+	public CacheLinePool cache = new CacheLinePool(CACHE_SIZE_B/LINE_SIZE_B); 	// 总大小1MB / 行大小1KB = 1024个行
 
 	private static Cache cacheInstance = new Cache();
 
@@ -34,6 +34,7 @@ public class Cache {	//
 	private MappingStrategy mappingStrategy;
 
 	Transformer transformer = new Transformer();
+
 	/**
 	 * 查询{@link Cache#cache}表以确认包含[sAddr, sAddr + len)的数据块是否在cache内
 	 * 如果目标数据块不在Cache内，则将其从内存加载到Cache
@@ -43,6 +44,8 @@ public class Cache {	//
 	 */
 	public int fetch(String sAddr, int len) {
 		// TODO
+		int blockNO = Integer.parseInt(transformer.binaryToInt("0000000000"+sAddr.substring(0, 22)));
+		mappingStrategy.writeCache(blockNO);
 		return -1;
 	}
 
@@ -147,15 +150,21 @@ public class Cache {	//
 	/**
 	 * 负责对CacheLine进行动态初始化
 	 */
-	private class CacheLinePool {
+	public class CacheLinePool {
 		/**
 		 * @param lines Cache的总行数
 		 */
 		CacheLinePool(int lines) {
 			clPool = new CacheLine[lines];
 		}
-		private CacheLine[] clPool;
-		private CacheLine get(int lineNO) {
+		public CacheLine[] clPool;
+
+		/**
+		 * 根据行号获得特定的行
+		 * @param lineNO 行号，十进制整数
+		 * @return 如果对应行有数据，返回这一行，否则返回null
+		 */
+		public CacheLine get(int lineNO) {
 			if (lineNO >= 0 && lineNO <clPool.length) {
 				CacheLine l = clPool[lineNO];
 				if (l == null) {
@@ -171,7 +180,7 @@ public class Cache {	//
 	/**
 	 * Cache行，每行长度为(1+22+{@link Cache#LINE_SIZE_B})
 	 */
-	private class CacheLine {
+	public class CacheLine {
 		// 有效位，标记该条数据是否有效
 		boolean validBit = false;
 
@@ -187,10 +196,10 @@ public class Cache {	//
 		// (2^n)-路组关联映射: 22-(10-n) 位
 		// 注意，tag在物理地址中用高位表示，如：直接映射(32位)=tag(12位)+行号(10位)+块内地址(10位)，
 		// 那么对于值为0b1111的tag应该表示为0000000011110000000000，其中前12位为有效长度
-		char[] tag = new char[22];
+		public char[] tag = new char[22];
 
 		// 数据
-		char[] data = new char[LINE_SIZE_B];
+		public char[] data = new char[LINE_SIZE_B];
 
 		char[] getData() {
 			return this.data;
