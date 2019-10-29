@@ -18,7 +18,13 @@ public class SetAssociativeMapping extends MappingStrategy{
     @Override
     public char[] getTag(int blockNO) {
         // TODO
-        return null;
+        // 4路组关联映射，1024行，256组（2的8次方）
+        String blockNumber = transform(blockNO);
+        char[] tag = new char[22];
+        for (int i=0; i<14; i++){
+            tag[i] = blockNumber.charAt(i);
+        }
+        return tag;
     }
 
     /**

@@ -14,12 +14,13 @@ public class AssociativeMapping extends MappingStrategy {  // 全相联映射
     @Override
     public char[] getTag(int blockNO) {
         // TODO
-        String blockNumber = transformer.intToBinary(Integer.toString(blockNO));
-        char[] blockTag = new char[22];
+        // 全关联映射，22位的块号就是cache的tag
+        String blockNumber = transform(blockNO);
+        char[] tag = new char[22];
         for (int i=0; i<22; i++){
-            blockTag[i] = blockNumber.charAt(i);
+            tag[i] = blockNumber.charAt(i);
         }
-        return blockTag;
+        return tag;
     }
 
     @Override

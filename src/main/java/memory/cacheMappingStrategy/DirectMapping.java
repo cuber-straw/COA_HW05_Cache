@@ -18,7 +18,14 @@ public class DirectMapping extends MappingStrategy{
     @Override
     public char[] getTag(int blockNO) {
         // TODO
-        return null;
+        // 直接映射中，int块号由22位二进制串计算而来，其中前12位是cache中的tag位，后10位是其对应的cache中的行号
+        // 先将block转化位22位01串，再取其前12位返回
+        String blockNumber = transform(blockNO);
+        char[] tag = new char[22];
+        for (int i=0; i<12; i++){
+            tag[i] = blockNumber.charAt(i);
+        }
+        return tag;
     }
 
 
