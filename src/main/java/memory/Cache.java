@@ -31,7 +31,7 @@ public class Cache {	//
 		return cacheInstance;
 	}
 
-	private MappingStrategy mappingStrategy;
+	public MappingStrategy mappingStrategy;
 
 	Transformer transformer = new Transformer();
 

@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 直接映射 12位标记 + 10位块号 + 10位块内地址
  */
-public class DirectMapping extends MappingStrategy{
+public class DirectMapping extends MappingStrategy {
 
     Transformer transformer = new Transformer();
 
@@ -25,8 +25,14 @@ public class DirectMapping extends MappingStrategy{
         String blockNumber = transform(blockNO);
         // 返回的tag有22个char，前12个是直接映射下的tag，后10个标记映射到的cache中的行号
         char[] tag = new char[22];
-        for (int i=0; i<22; i++){
+        for (int i = 0; i < 12; i++) {
             tag[i] = blockNumber.charAt(i);
+        }
+
+        // 由directingMapping的用例3可知，tag的无效位全都被赋值为0。
+        // 直接映射中，tag后10位是多余的，这里赋值为0。
+        for (int i = 12; i < 22; i++) {
+            tag[i] = '0';
         }
         return tag;
     }
@@ -34,6 +40,7 @@ public class DirectMapping extends MappingStrategy{
 
     /**
      * 根据内存地址找到对应的行是否命中，直接映射不需要用到替换策略
+     *
      * @param blockNO 内存数据块的块号
      * @return -1 表示未命中 1  表示命中
      */
@@ -44,7 +51,7 @@ public class DirectMapping extends MappingStrategy{
         int lineNO = blockNO % 1024; // 通过22位的blockNO得到低10位的行号，对1024取模
         Cache.CacheLine cl = thisCache.cache.get(lineNO); // 获得cache中的对应行
         boolean equal = true;
-        if (!cl.validBit){
+        if (!cl.validBit) {
             return -1;
         }
         try {
@@ -57,7 +64,7 @@ public class DirectMapping extends MappingStrategy{
         } catch (NullPointerException e) {
             equal = false;
         }
-        if (equal){ // 判断对应行的tag是否与blockNO的tag相同
+        if (equal) { // 判断对应行的tag是否与blockNO的tag相同
             return 1;
         } else {
             return -1;
@@ -67,20 +74,18 @@ public class DirectMapping extends MappingStrategy{
     /**
      * 在未命中情况下重写cache，直接映射不需要用到替换策略
      * @param blockNO
-     * @return 为什么助教写的要返回int？
+     * @return 返回cache中所对应的行。事实上不需要用到返回值，这里直接返回-1了
      */
     @Override
     public int writeCache(int blockNO) {
         // TODO
-        if (map(blockNO) == -1){
-            Cache thisCache = Cache.getCache();
-            Memory thisMemory = Memory.getMemory();
-            String blockNumber = transform(blockNO);
-            int lineNO = blockNO % 1024;
-            thisCache.cache.clPool[lineNO].validBit = true;
-            thisCache.cache.clPool[lineNO].data = thisMemory.read(blockNumber+"0000000000", 1024);
-            thisCache.cache.clPool[lineNO].tag = getTag(blockNO);
-        }
+        Cache thisCache = Cache.getCache();
+        Memory thisMemory = Memory.getMemory();
+        String blockNumber = transform(blockNO);
+        int lineNO = blockNO % 1024;
+        thisCache.cache.clPool[lineNO].validBit = true;
+        thisCache.cache.clPool[lineNO].data = thisMemory.read(blockNumber + "0000000000", 1024);
+        thisCache.cache.clPool[lineNO].tag = getTag(blockNO);
         return -1;
     }
 

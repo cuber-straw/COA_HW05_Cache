@@ -34,15 +34,15 @@ public abstract class MappingStrategy {
 
 	/**
 	 * 将int类型的blockNO转换位22位01串
-	 * @param num 待转换的数
+	 * @param blockNO 待转换的数
 	 * @return 22位二进制字符串
 	 */
-	static String transform(int num){
+	static String transform(int blockNO){
 		StringBuilder sb = new StringBuilder();
 		for (int i=0; i<22; i++){
-			if (num / (int)Math.pow(2, 21-i) == 1){
+			if (blockNO / (int)Math.pow(2, 21-i) == 1){
 				sb.append(1);
-				num = num - (int)Math.pow(2, 21-i);
+				blockNO = blockNO - (int)Math.pow(2, 21-i);
 			} else {
 				sb.append(0);
 			}
