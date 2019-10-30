@@ -33,7 +33,7 @@ public abstract class MappingStrategy {
 	public abstract int writeCache(int blockNO);
 
 	/**
-	 * 将int类型的blockNumber转换位22位01串
+	 * 将int类型的blockNO转换位22位01串
 	 * @param num 待转换的数
 	 * @return 22位二进制字符串
 	 */

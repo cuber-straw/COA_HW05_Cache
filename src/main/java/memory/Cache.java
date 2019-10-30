@@ -45,8 +45,11 @@ public class Cache {	//
 	public int fetch(String sAddr, int len) {
 		// TODO
 		int blockNO = Integer.parseInt(transformer.binaryToInt("0000000000"+sAddr.substring(0, 22)));
-		mappingStrategy.writeCache(blockNO);
-		return -1;
+		// map 返回-1，说明未命中
+		if (mappingStrategy.map(blockNO) == -1){
+			mappingStrategy.writeCache(blockNO);
+		}
+		return blockNO % 1024;
 	}
 
 	/**
@@ -66,7 +69,7 @@ public class Cache {	//
 			if (addr + nextSegLen >= upperBound) {
 				nextSegLen = upperBound - addr;
 			}
-			int rowNO = fetch(t.intToBinary(String.valueOf(addr)), nextSegLen);
+			int rowNO = fetch(t.intToBinary(String.valueOf(addr)), nextSegLen); // fetch应该返回正确的rowNO
 			char[] cache_data = cache.get(rowNO).getData();
 			int i=0;
 			while (i < nextSegLen) {
@@ -182,7 +185,7 @@ public class Cache {	//
 	 */
 	public class CacheLine {
 		// 有效位，标记该条数据是否有效
-		boolean validBit = false;
+		public boolean validBit = false;
 
 		// 用于LFU算法，记录该条cache使用次数
 		int visited = 0;
@@ -198,7 +201,7 @@ public class Cache {	//
 		// 那么对于值为0b1111的tag应该表示为0000000011110000000000，其中前12位为有效长度
 		public char[] tag = new char[22];
 
-		// 数据
+		// 数据，LINE_SIZE_B = 1024
 		public char[] data = new char[LINE_SIZE_B];
 
 		char[] getData() {
