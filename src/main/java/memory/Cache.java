@@ -4,6 +4,7 @@ import memory.cacheMappingStrategy.AssociativeMapping;
 import memory.cacheMappingStrategy.DirectMapping;
 import memory.cacheMappingStrategy.MappingStrategy;
 import memory.cacheMappingStrategy.SetAssociativeMapping;
+import memory.cacheReplacementStrategy.LFUReplacement;
 import memory.cacheReplacementStrategy.ReplacementStrategy;
 import transformer.Transformer;
 
@@ -44,12 +45,14 @@ public class Cache {	//
 	 */
 	public int fetch(String sAddr, int len) {
 		// TODO
-		int blockNO = Integer.parseInt(transformer.binaryToInt("0000000000"+sAddr.substring(0, 22)));
+		int blockNO = Integer.parseInt(transformer.binaryToInt("0000000000"+sAddr.substring(0, 22))); // 得到地址所在的块号
 		// map 返回-1，说明未命中
-		if (mappingStrategy.map(blockNO) == -1){
-			mappingStrategy.writeCache(blockNO);
+		int rowNO = mappingStrategy.map(blockNO);
+		if (rowNO == -1) { // 表示没有命中，要将数据写入cache，并返回写入的行号
+			return mappingStrategy.writeCache(blockNO);
+		} else {
+			return rowNO;
 		}
-		return blockNO % 1024;
 	}
 
 	/**
@@ -188,7 +191,7 @@ public class Cache {	//
 		public boolean validBit = false;
 
 		// 用于LFU算法，记录该条cache使用次数
-		int visited = 0;
+		public int visited = 0;
 
 		// 用于LRU和FIFO算法，记录该条数据时间戳
 		Long timeStamp = 0L;
@@ -211,5 +214,31 @@ public class Cache {	//
 			return this.tag;
 		}
 
+	}
+
+	public static void main(String[] args) {
+		Memory memory = Memory.getMemory();
+		Cache cache = Cache.getCache();
+		cache.setStrategy(new AssociativeMapping(), new LFUReplacement());
+		char[] input = new char[1024 * 1024];
+		char[] second = new char[1024];
+		char[] third = new char[1024];
+		Arrays.fill(input, (char) 0b11111111);
+		Arrays.fill(second, (char) 0b10001111);
+		Arrays.fill(third, (char) 0b10001100);
+		String eipBase = "00000000000000000000000000000000";
+		String eipSec = "00000000000000000000010000000000";
+		String eipTrd = "00000111000000000000000000000000";
+		//write First
+		memory.write(eipBase, input.length, input);
+		char[] dataRead = cache.read(eipBase, input.length);
+
+		memory.write(eipSec, second.length, second);
+		dataRead = cache.read(eipSec, second.length);
+
+		memory.write(eipTrd, third.length, third);
+		dataRead = cache.read(eipTrd, third.length);
+
+		System.out.println(cache.cache.clPool);
 	}
 }

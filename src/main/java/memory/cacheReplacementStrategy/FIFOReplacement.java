@@ -19,16 +19,14 @@ public class FIFOReplacement extends ReplacementStrategy {
     @Override
     public int isHit(int start, int end, char[] addrTag) {
         // TODO
-        boolean hit = false;
         Cache thisCache = Cache.getCache();
         for (int i=start; i<end; i++){
             if (Arrays.equals(addrTag, thisCache.cache.get(i).tag)){
-                hit = true;
-                break;
+                if (thisCache.cache.get(i).validBit){ // 成功命中
+                    thisCache.cache.get(i).visited ++;
+                    return i;
+                }
             }
-        }
-        if (hit){
-            return 1;
         }
         return -1;
     }

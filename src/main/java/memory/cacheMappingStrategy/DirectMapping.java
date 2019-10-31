@@ -40,9 +40,8 @@ public class DirectMapping extends MappingStrategy {
 
     /**
      * 根据内存地址找到对应的行是否命中，直接映射不需要用到替换策略
-     *
      * @param blockNO 内存数据块的块号
-     * @return -1 表示未命中 1  表示命中
+     * @return 未命中时，返回-1，如果命中，返回命中的cache行号
      */
     @Override
     public int map(int blockNO) {
@@ -51,11 +50,11 @@ public class DirectMapping extends MappingStrategy {
         int lineNO = blockNO % 1024; // 通过22位的blockNO得到低10位的行号，对1024取模
         Cache.CacheLine cl = thisCache.cache.get(lineNO); // 获得cache中的对应行
         boolean equal = true;
-        if (!cl.validBit) {
+        if (!cl.validBit) { // 有效位为0，未命中
             return -1;
         }
         try {
-            for (int i = 0; i < 12; i++) {
+            for (int i = 0; i < 12; i++) { // 直接映射，前12位是tag
                 if (cl.tag[i] != getTag(blockNO)[i]) {
                     equal = false;
                     break;
@@ -65,7 +64,7 @@ public class DirectMapping extends MappingStrategy {
             equal = false;
         }
         if (equal) { // 判断对应行的tag是否与blockNO的tag相同
-            return 1;
+            return lineNO;
         } else {
             return -1;
         }
@@ -74,19 +73,19 @@ public class DirectMapping extends MappingStrategy {
     /**
      * 在未命中情况下重写cache，直接映射不需要用到替换策略
      * @param blockNO
-     * @return 返回cache中所对应的行。事实上不需要用到返回值，这里直接返回-1了
+     * @return 返回写入的数据在cache中的行。
      */
     @Override
     public int writeCache(int blockNO) {
         // TODO
         Cache thisCache = Cache.getCache();
         Memory thisMemory = Memory.getMemory();
-        String blockNumber = transform(blockNO);
-        int lineNO = blockNO % 1024;
+        String blockNumber = transform(blockNO); // 得到即将写入的数据所在的块号
+        int lineNO = blockNO % 1024; // 计算将要写入的行号
         thisCache.cache.clPool[lineNO].validBit = true;
         thisCache.cache.clPool[lineNO].data = thisMemory.read(blockNumber + "0000000000", 1024);
         thisCache.cache.clPool[lineNO].tag = getTag(blockNO);
-        return -1;
+        return lineNO;
     }
 
 
