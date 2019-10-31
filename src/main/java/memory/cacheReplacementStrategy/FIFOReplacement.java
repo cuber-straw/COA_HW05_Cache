@@ -23,7 +23,6 @@ public class FIFOReplacement extends ReplacementStrategy {
         for (int i=start; i<end; i++){
             if (Arrays.equals(addrTag, thisCache.cache.get(i).tag)){
                 if (thisCache.cache.get(i).validBit){ // 成功命中
-                    thisCache.cache.get(i).visited ++;
                     return i;
                 }
             }
