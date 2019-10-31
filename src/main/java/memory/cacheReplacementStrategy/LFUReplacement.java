@@ -32,13 +32,15 @@ public class LFUReplacement extends ReplacementStrategy {
      * @param end 结束行 闭区间
      * @param addrTag tag
      * @param input  数据
-     * @return
+     * @return 返回写入到cache的哪一行
      */
     @Override
     public int writeCache(int start, int end, char[] addrTag, char[] input) {
         // TODO
         Cache thisCache = Cache.getCache();
         // 首先检查有没有失效的行,如果有失效行，直接写到失效行去
+        // 在AssociativeMapping的LFUTest里面，第二次写数据的时候之所以写到第二行去，就是因为第二行失效了
+        // memory在更新数据的时候调用invalid函数使得第二行失效
         for (int i=start; i<end; i++){
             if (!thisCache.cache.clPool[i].validBit){
                 thisCache.cache.clPool[i].data = input;
@@ -50,6 +52,8 @@ public class LFUReplacement extends ReplacementStrategy {
         }
 
         // 在所有行都是有效行的基础下，再去寻找visited最小的替换
+        // visited相同时，替换掉行数最小的
+        // AssociativeMapping的LFUTest里，而第三次写数据的时候写到第0行去，是因为所有行的visited都是1，第0行最小
         int minimumVisited = thisCache.cache.get(start).visited;
         int minimumVisitedLineNumber = start;
         for (int i=start; i<end; i++){

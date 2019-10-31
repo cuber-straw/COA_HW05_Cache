@@ -37,12 +37,42 @@ public class FIFOReplacement extends ReplacementStrategy {
      * @param end 结束行 闭区间
      * @param addrTag tag
      * @param input  数据
-     * @return
+     * @return 返回写入到cache中的哪一行
      */
     @Override
     public int writeCache(int start, int end, char[] addrTag, char[] input) {
         // TODO
-        return -1;
+        Cache thisCache = Cache.getCache();
+
+        // 如果cache命中，不需要重写，那么所有行的timeStamp是否增加不影响它们的相对大小
+        // 所以这里只在没命中需要重写的时候增加timeStamp
+        for (int i=start; i<end; i++){
+            thisCache.cache.clPool[i].timeStamp ++;
+        }
+        // 当cache中有无效行时，可以直接写到无效行中
+        for (int i=start; i<end; i++){
+            if (!thisCache.cache.clPool[i].validBit){
+                thisCache.cache.clPool[i].data = input;
+                thisCache.cache.clPool[i].timeStamp = 1L;
+                thisCache.cache.clPool[i].tag = addrTag;
+                thisCache.cache.clPool[i].validBit = true;
+                return i;
+            }
+        }
+
+        // 当cache所有有行有占满后，寻找timeStamp最大的行替换掉
+        long maxTimeStamp = thisCache.cache.clPool[start].timeStamp;
+        int maxTimeStampLineNum = start;
+        for (int i=start; i<end; i++){
+            if (thisCache.cache.clPool[i].timeStamp > maxTimeStamp){
+                maxTimeStamp = thisCache.cache.clPool[i].timeStamp;
+                maxTimeStampLineNum = i;
+            }
+        }
+        thisCache.cache.clPool[maxTimeStampLineNum].timeStamp = 1L;
+        thisCache.cache.clPool[maxTimeStampLineNum].tag = addrTag;
+        thisCache.cache.clPool[maxTimeStampLineNum].data = input;
+        return maxTimeStampLineNum;
     }
 
 

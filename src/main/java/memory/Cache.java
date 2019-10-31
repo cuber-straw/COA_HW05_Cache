@@ -4,6 +4,7 @@ import memory.cacheMappingStrategy.AssociativeMapping;
 import memory.cacheMappingStrategy.DirectMapping;
 import memory.cacheMappingStrategy.MappingStrategy;
 import memory.cacheMappingStrategy.SetAssociativeMapping;
+import memory.cacheReplacementStrategy.FIFOReplacement;
 import memory.cacheReplacementStrategy.LFUReplacement;
 import memory.cacheReplacementStrategy.ReplacementStrategy;
 import transformer.Transformer;
@@ -194,7 +195,7 @@ public class Cache {	//
 		public int visited = 0;
 
 		// 用于LRU和FIFO算法，记录该条数据时间戳
-		Long timeStamp = 0L;
+		public Long timeStamp = 0L;
 
 		// 标记，占位长度为()22位，有效长度取决于映射策略：
 		// 直接映射: 12 位
@@ -216,29 +217,39 @@ public class Cache {	//
 
 	}
 
+
 	public static void main(String[] args) {
 		Memory memory = Memory.getMemory();
 		Cache cache = Cache.getCache();
-		cache.setStrategy(new AssociativeMapping(), new LFUReplacement());
-		char[] input = new char[1024 * 1024];
-		char[] second = new char[1024];
-		char[] third = new char[1024];
-		Arrays.fill(input, (char) 0b11111111);
-		Arrays.fill(second, (char) 0b10001111);
-		Arrays.fill(third, (char) 0b10001100);
-		String eipBase = "00000000000000000000000000000000";
-		String eipSec = "00000000000000000000010000000000";
-		String eipTrd = "00000111000000000000000000000000";
-		//write First
-		memory.write(eipBase, input.length, input);
-		char[] dataRead = cache.read(eipBase, input.length);
+		cache.setStrategy(new AssociativeMapping(), new FIFOReplacement());
 
-		memory.write(eipSec, second.length, second);
-		dataRead = cache.read(eipSec, second.length);
+		char[] input1 = new char[1024 * 1024];
+		char[] input2 = new char[1024];
+		char[] input3 = new char[1024];
+		Arrays.fill(input1, (char)0b11111111);
+		Arrays.fill(input2, (char)0b01010101);
+		Arrays.fill(input3, (char)0b01110111);
+		String eip1 = "00000000000000000000000000000000";
+		String eip2 = "00000010101000000000010000000000";
+		String eip3 = "00000010011100000000010000000001";
 
-		memory.write(eipTrd, third.length, third);
-		dataRead = cache.read(eipTrd, third.length);
+		// 第一次写入
+		memory.write(eip1, input1.length, input1);
+		// cache里现在应该全是 0b11111111
+		char[] dataRead = cache.read(eip1, 1024 * 1024);
 
-		System.out.println(cache.cache.clPool);
+		// 第二次写入
+		memory.write(eip2, input2.length, input2);
+		// cache中第一个块应该被替换，相应的tag需要改动
+		dataRead = cache.read(eip2, 1024);
+		cache.checkStatus(new int[]{0}, new boolean[]{true}, new char[][]{"0000001010100000000001".toCharArray()});
+
+		// 第三次写入
+		// cache中的第二个块和第三个块应该被替换，相应的tag需要改动
+		memory.write(eip3, input3.length, input3);
+		dataRead = cache.read(eip3, 1024);
+		
+		cache.clear();
+
 	}
 }
