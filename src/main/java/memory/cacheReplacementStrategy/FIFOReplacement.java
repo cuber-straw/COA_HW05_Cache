@@ -14,7 +14,7 @@ public class FIFOReplacement extends ReplacementStrategy {
      * 对于全关联映射，起始行为第0行，结束行为第1024行
      * @param start 起始行
      * @param end 结束行 闭区间
-     * @return 命中返回1，没命中返回-1
+     * @return 命中返回命中的行号，没命中返回-1
      */
     @Override
     public int isHit(int start, int end, char[] addrTag) {
